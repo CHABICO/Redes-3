@@ -19,7 +19,7 @@ pygmentsUseClasses = true
 [params]
   google_analytics_id = ""
 
-  showAuthorOnHomepage = true
+  showAuthorOnHomepage = false
   showAuthorOnPosts = false
   showIntroContentOnHomepage = true # the description below the title on home page
   showPostsOnHomepage = false
@@ -44,9 +44,9 @@ pygmentsUseClasses = true
   fontFamilyParagraph = "Ubuntu"
   fontFamilyMonospace = "Ubuntu Mono"
   showAboutPage = false  # Toggle to control About page visibility
-  github_username1 = "chabico"
-  github_username2 = "pocahontas2025"
-  github_username3 = "00xRac"
+  github_username1 = "x4vico"
+  github_username2 = "Sote19"
+  github_username3 = "Racsofeob2"
 
   footer_text = "| APT-404"  # Add this line for custom footer text
   footer_year = "2025-2026"  # Static year for footer
@@ -61,13 +61,19 @@ pygmentsUseClasses = true
 
 [menu]
   [[menu.main]]
-    identifier = 'home'
-    name = 'Home'
+    name = 'Inicio'
+    identifier = 'inicio'
     url = '/'
     weight = 1
-  [[menu.main]]
-    name = "CTF"
-    identifier = "CTF"
-    weight = 3
-    url = "/CTF/"
 
+  [[menu.main]]
+    name = "Fases"
+    identifier = "fases"
+    weight = 2
+    url = "/Fases/"
+
+  [[menu.main]]
+    name = "Configuraciones"
+    identifier = "configuraciones"
+    url = "/configuraciones/"
+    weight = 3

@@ -1,6 +1,6 @@
 ---
 title: Proyecto Redes
-description: Somewhere between initial reconnaissance and root access.
+description: 
 ---
 
 ## Contexto
