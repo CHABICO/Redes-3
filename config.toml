@@ -1,8 +1,8 @@
-baseURL = "https://chabico.github.io/Redes-3"
+baseURL = "https://chabico.github.io/Redes-3/"
 languageCode = "es-es"
 theme = "hugo-winston-theme"
 themesDir = "themes"
-title = "// 0xRac Blog"
+title = "Redes-3"
 
 [pagination]
 pagerSize = 3
@@ -44,9 +44,11 @@ pygmentsUseClasses = true
   fontFamilyParagraph = "Ubuntu"
   fontFamilyMonospace = "Ubuntu Mono"
   showAboutPage = false  # Toggle to control About page visibility
-  github_username = "Racsofeob2"
+  github_username1 = "chabico"
+  github_username2 = "pocahontas2025"
+  github_username3 = "00xRac"
 
-  footer_text = ":: 0xRac Blog"  # Add this line for custom footer text
+  footer_text = "| APT-404"  # Add this line for custom footer text
   footer_year = "2025-2026"  # Static year for footer
 
 # markdown config settings https://gohugo.io/getting-started/configuration-markup/#goldmark

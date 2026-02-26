@@ -1,10 +1,10 @@
 :root {
   --base-color: #000000 !important;  /* Full Black */
   --base-offset-color: #141414 !important;  /* Keeps slight contrast for sections */
-  --highlight-color: #ED2939 !important;  /* Vibrant Red */
+  --highlight-color: #2c9ff1 !important;  /* Vibrant Red */
   --heading-color: #EAEAEA !important;  /* Soft White */
   --text-color: #BBBBBB !important;  /* Light Gray for better readability */
-  --dot-color: #ED2939 !important;  /* Matches Highlight */
+  --dot-color: #2c9ff1 !important;  /* Matches Highlight */
   --code-bg: #121212 !important;  /* Darker Code Background for contrast */
 }
 
@@ -22,12 +22,12 @@ body {
 }
 
 ::selection {
-  background: #ED2939 !important; /* Same highlight color */
+  background: #2c9ff1 !important; /* Same highlight color */
   color: #F5F5F5 !important; /* Slightly softer white for readability */
 }
 
 ::-moz-selection {
-  background: #ED2939 !important;
+  background: #2c9ff1 !important;
   color: #F5F5F5 !important;
 }
 
@@ -115,7 +115,7 @@ div[id="wrapper"] {
   position: relative !important;
   background: var(--base-color) !important;
   border-radius: 12px !important;
-  border: 1px solid rgba(237, 41, 57, 0.3) !important;
+  border: 1px solid rgba(41, 237, 44, 0.3) !important;
   margin: 25px 0 !important;
   overflow: hidden !important;
   padding: 0px !important;

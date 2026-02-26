@@ -8,7 +8,13 @@
         </div>
         <div class="footer-social">
             <!-- Social Icons -->
-            <a href="https://github.com/{{ .Site.Params.github_username }}" target="_blank" title="GitHub">
+            <a href="https://github.com/{{ .Site.Params.github_username1 }}" target="_blank" title="GitHub">
+                {{ readFile "static/images/icons/github.svg" | safeHTML }}
+            </a>
+            <a href="https://github.com/{{ .Site.Params.github_username2 }}" target="_blank" title="GitHub">
+                {{ readFile "static/images/icons/github.svg" | safeHTML }}
+            </a>
+            <a href="https://github.com/{{ .Site.Params.github_username3 }}" target="_blank" title="GitHub">
                 {{ readFile "static/images/icons/github.svg" | safeHTML }}
             </a>
         </div>
