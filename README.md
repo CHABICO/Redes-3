@@ -1,3 +1,6 @@
+# web
+https://chabico.github.io/Redes-3/
+
 
 # 🚀 Cybersecurity-Themed Hugo Blog Template  
 <!-- ![image](https://github.com/user-attachments/assets/41b460ad-fc3b-4599-a35e-0c866c9744c8) -->
