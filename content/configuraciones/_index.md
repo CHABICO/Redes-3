@@ -1,5 +1,5 @@
 ---
-title: Fases
+title: Configuraciones
 description: 
 ---
 

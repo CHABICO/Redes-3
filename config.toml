@@ -62,18 +62,18 @@ pygmentsUseClasses = true
 [menu]
   [[menu.main]]
     name = 'Inicio'
-    identifier = 'inicio'
+    identifier = 'home'
     url = '/'
     weight = 1
-
-  [[menu.main]]
-    name = "Fases"
-    identifier = "fases"
-    weight = 2
-    url = "/Fases/"
 
   [[menu.main]]
     name = "Configuraciones"
     identifier = "configuraciones"
     url = "/configuraciones/"
+    weight = 2
+
+  [[menu.main]]
+    name = "Archivos"
+    identifier = "archivos"
+    url = "/archivos/"
     weight = 3
