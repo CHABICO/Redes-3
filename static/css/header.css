@@ -124,11 +124,11 @@
 .menu-main ul li a:hover,
 .menu-main ul li.active a {
     color: #ffffff !important;
-    background: rgba(237, 41, 57, 0.1) !important;
-    border-color: rgba(237, 41, 57, 0.2) !important;
+    background: rgba(48, 41, 237, 0.1) !important;
+    border-color: rgba(41, 54, 237, 0.2) !important;
     box-shadow: 
-        0 0 20px rgba(237, 41, 57, 0.1),
-        0 0 0 1px rgba(237, 41, 57, 0.1) !important;
+        0 0 20px rgba(41, 44, 237, 0.1),
+        0 0 0 1px rgba(41, 74, 237, 0.1) !important;
     transform: translateY(-1px) !important;
 }
 

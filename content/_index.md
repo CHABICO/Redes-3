@@ -29,3 +29,27 @@ NovaTech quiere tener el control total de su presencia online sin depender de te
 
 Aquí reside el Servidor Web (la página corporativa para clientes), el Servidor DNS (para resolver los nombres de su propio dominio) y el Servidor de Mail (para las comunicaciones oficiales).
 - Si un atacante logra comprometer la página web desde Internet, se quedará atrapado en la DMZ gracias al Firewall, y no podrá saltar a las VLANs donde están los datos de los clientes y empleados.
+
+## Estado del Proyecto
+
+### Infraestructura de Red
+- [x] Routers
+- [x] Switches
+- [x] VLANs
+- [ ] STP (Spanning Tree Protocol)
+- [ ] HSRP (Alta disponibilidad de gateway)
+- [ ] OSPF (Enrutamiento dinámico)
+
+### Seguridad
+- [ ] NGFW (Next Generation Firewall)
+- [ ] IDS / IPS
+- [ ] SIEM
+
+### Servicios y Arquitectura
+- [x] DMZ
+- [x] Clientes Linux
+
+### Conectividad y Acceso Remoto
+- [ ] VPN IPsec Site-to-Site
+- [ ] VPN Remote Access
+- [ ] SD-WAN

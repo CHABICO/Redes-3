@@ -45,8 +45,8 @@ pygmentsUseClasses = true
   fontFamilyMonospace = "Ubuntu Mono"
   showAboutPage = false  # Toggle to control About page visibility
   github_username1 = "x4vico"
-  github_username2 = "Sote19"
-  github_username3 = "Racsofeob2"
+  github_username2 = "Racsofeob2"
+  github_username3 = "Sote19"
 
   footer_text = "| APT-404"  # Add this line for custom footer text
   footer_year = "2025-2026"  # Static year for footer
@@ -61,19 +61,19 @@ pygmentsUseClasses = true
 
 [menu]
   [[menu.main]]
-    name = 'Inicio'
     identifier = 'home'
+    name = 'Home'
     url = '/'
     weight = 1
 
   [[menu.main]]
-    name = "Configuraciones"
     identifier = "configuraciones"
+    name = "Configuraciones"
     url = "/configuraciones/"
     weight = 2
 
   [[menu.main]]
-    name = "Archivos"
     identifier = "archivos"
+    name = "Archivos"
     url = "/archivos/"
     weight = 3

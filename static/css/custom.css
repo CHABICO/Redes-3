@@ -63,7 +63,7 @@ a {
 }
 
 a:hover {
-  color: #ff6773 !important; /* A brighter alternative */
+  color: #67deff !important; /* A brighter alternative */
   text-decoration: underline !important;
 }
 
@@ -128,7 +128,7 @@ div[id="wrapper"] {
   right: 0 !important;
   height: 45px !important;
   background: #0d0d0d !important;
-  border-bottom: 1px solid rgba(237, 41, 57, 0.1) !important;
+  border-bottom: 1px solid rgba(41, 61, 237, 0.1) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
