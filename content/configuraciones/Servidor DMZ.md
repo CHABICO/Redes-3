@@ -1,14 +1,27 @@
 ---
-title: "Implementación de DMZ y Servicios con Docker"
+title: "Configuración de DMZ y Servicios con Docker"
 date: 2026-02-26
 summary: "Diseño de una arquitectura de 3 zonas y despliegue de servicios corporativos (DNS, Web, Correo) mediante contenedores en un servidor Ubuntu alojado en la DMZ."
-author: "Xavier C., Òscar F., Gerard S."
 ---
 
 
+# Configuración VMware
 
-[Image of DMZ network architecture]
+<details>
+<summary>Configuración VMware - Adaptadores de Red</summary>
 
+![conf server vmware](/images/recursos/ubuntu-server-vmware.png)
+
+</details>
+
+<details>
+<summary>Panel de Control - Configuración de Red</summary>
+
+![Network Connections](/images/recursos/network-connections.png)
+
+</details>
+
+<br>
 
 ## Arquitectura de 3 Zonas (Inside, Outside, DMZ)
 

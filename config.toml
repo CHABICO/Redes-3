@@ -67,13 +67,19 @@ pygmentsUseClasses = true
     weight = 1
 
   [[menu.main]]
+    identifier = "red"
+    name = "Red"
+    url = "/red/"
+    weight = 2
+
+  [[menu.main]]
     identifier = "configuraciones"
     name = "Configuraciones"
     url = "/configuraciones/"
-    weight = 2
+    weight = 3
 
   [[menu.main]]
     identifier = "archivos"
     name = "Archivos"
     url = "/archivos/"
-    weight = 3
+    weight = 4

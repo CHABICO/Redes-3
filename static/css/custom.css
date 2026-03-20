@@ -95,6 +95,29 @@ div[id="wrapper"] {
     padding-right: 300px !important; /* Space for TOC */
 }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+}
+
+th {
+  background-color: var(--highlight-color, #7b16ff);
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--base-offset-color, #eaeaea);
+}
+
+tr:hover td {
+  background-color: var(--base-offset-color, #eaeaea);
+}
+
 @media (max-width: 768px) {
     .content.with-toc {
         padding-right: 20px !important; /* Mobile spacing */
@@ -375,6 +398,13 @@ div[id="wrapper"] {
 
 .pagination-link {
   color: #ffffff !important;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1rem auto;
 }
 
 .intro img {
