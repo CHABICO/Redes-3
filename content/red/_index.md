@@ -6,6 +6,11 @@ title: "Red"
 
 ![topología de red](/images/recursos/topologia_20-3.png)
 
+## Proximamente 
+🚧 estamos trabajando en ello para hacer una infraestructura más segura 🚧
+
+![topología de red nueva](/images/recursos/topologia_14-4.png)
+
 ---
 
 # Direccionamiento de Red
