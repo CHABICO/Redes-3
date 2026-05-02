@@ -83,3 +83,9 @@ pygmentsUseClasses = true
     name = "Archivos"
     url = "/archivos/"
     weight = 4
+  
+  [[menu.main]]
+    identifier = "progreso"
+    name = "Progreso"
+    url = "/progreso/"
+    weight = 5
