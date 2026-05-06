@@ -124,6 +124,85 @@ banner motd #
 
 ---
 
+## BGP con el ISP
+
+El enunciado contempla la configuración de BGP (Border Gateway Protocol) entre 
+los routers de borde y el ISP simulado (Cloud1) para el intercambio de rutas 
+externas. Sin embargo, Cloud1 en el entorno de laboratorio es un nodo Cloud/NAT 
+de GNS3, que actúa únicamente como puente hacia la red del host y no dispone 
+de CLI ni proceso de routing. Al no existir un peer BGP real con el que negociar 
+la sesión eBGP, la implementación no es posible en este entorno.
+
+Actualmente la salida a internet se gestiona mediante una ruta estática por 
+defecto en ambos routers de borde:
+
+```
+ip route 0.0.0.0 0.0.0.0 200.20.2.1
+```
+
+---
+
+## Enrutamiento Dinámico — OSPF
+
+Como complemento a la redundancia proporcionada por HSRP, se ha configurado 
+OSPF (Open Shortest Path First) entre Rborde1 y Rborde2 para el intercambio 
+dinámico de rutas en el área 0.
+
+### Configuración OSPF
+
+Ambos routers anuncian los segmentos `10.10.0.0/24` y `192.168.44.0/24` 
+dentro del área backbone (área 0), con `default-information originate` 
+para propagar la ruta por defecto hacia los dispositivos internos.
+
+| Dispositivo | Router-ID | Redes anunciadas                        |
+|-------------|-----------|------------------------------------------|
+| Rborde1     | 1.1.1.1   | 10.10.0.0/24, 192.168.44.0/24           |
+| Rborde2     | 2.2.2.2   | 10.10.0.0/24, 192.168.44.0/24           |
+
+### Autenticación OSPF
+
+El enunciado requería autenticación SHA-256 mediante key chains. Sin embargo, 
+los routers Cisco c7200 en GNS3 ejecutan IOS 12.4, versión que no soporta 
+el comando `cryptographic-algorithm hmac-sha-256`. Como alternativa, se ha 
+implementado autenticación MD5 mediante `message-digest`, que proporciona 
+verificación criptográfica de los paquetes OSPF e impide la inyección de 
+rutas falsas por parte de dispositivos no autorizados.
+
+```
+router ospf 1
+ area 0 authentication message-digest
+
+interface FastEthernet0/0
+ ip ospf message-digest-key 1 md5 Cisco123
+
+interface FastEthernet1/0
+ ip ospf message-digest-key 1 md5 Cisco123
+```
+
+### Alcance y limitaciones
+
+OSPF se ha limitado a Rborde1 y Rborde2 por las siguientes razones:
+
+- **pfSense** no permite la instalación del paquete FRR en el entorno de 
+  laboratorio, por lo que no puede participar en el dominio OSPF.
+- **FortiGate** tiene el proceso OSPF parado y sin áreas configuradas; 
+  al no haber continuidad L3 entre los Rborde y el FortiGate sin pfSense 
+  como intermediario OSPF, no es posible extender el dominio.
+- **R1** no tiene OSPF configurado por la misma razón anterior.
+
+`passive-interface` no se ha aplicado porque todas las interfaces activas 
+de ambos routers participan en OSPF con vecinos activos. No existen 
+interfaces sin adyacencia donde aplicar esta medida.
+
+La segmentación en áreas OSPF tampoco se ha implementado: con únicamente 
+dos routers en el dominio, dividir en áreas no aporta ningún valor operativo. 
+Todo el dominio opera correctamente en el área 0 backbone.
+```
+
+---
+
 ## Notas de implementación
 
 El modelo **Cisco c7200** en GNS3 presenta una limitación conocida con máscaras **/30** en interfaces PA-GE y PA-FE-TX, rechazándolas con el error `Bad mask /30 for address`. La solución adoptada fue utilizar máscara **/24** (`255.255.255.0`) en el segmento de enlace hacia pfSense, lo que no afecta al funcionamiento del laboratorio pero debe tenerse en cuenta si la topología se traslada a equipos físicos o a imágenes IOSv, donde las máscaras /30 funcionan sin restricciones.
+
+STP no se ha implementado porque toda la topología opera en capa 3, con IPs en cada enlace. La redundancia y failover están gestionados por HSRP entre Rborde1 y Rborde2. En ausencia de enlaces trunk L2 entre switches, no existen loops de capa 2 que STP deba resolver.

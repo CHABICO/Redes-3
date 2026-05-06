@@ -15,24 +15,22 @@ tags: ["Checklist", "Estado", "Requisitos"]
 - [x] DHCP Snooping
 - [x] Dynamic ARP Inspection (DAI)
 - [x] HSRP — redundancia de gateway (Rborde1 activo, Rborde2 standby, VIP 192.168.44.201 / 10.10.0.1)
-- [ ] STP / Spanning Tree Protocol
+- [x] STP / Spanning Tree Protocol (no hace falta incluir)
 
 ---
 
 ## 2. Hardening de OSPF
 
 - [x] OSPF básico configurado (Rborde1, Rborde2, pfSense con FRR)
-- [ ] Autenticación OSPF con SHA-256
-- [ ] `passive-interface` en interfaces que no forman adyacencia
-- [ ] Segmentación en áreas OSPF para control de tráfico LSA
+- [x] Autenticación OSPF con SHA-256 (md5 por versión de routers)
+- [x] `passive-interface` en interfaces que no forman adyacencia
+- [x] Segmentación en áreas OSPF para control de tráfico LSA
 
 ---
 
 ## 3. BGP con el ISP
 
-- [ ] BGP configurado entre routers de borde y Cloud1 (ISP simulado)
-
-> ⚠️ Pendiente. Actualmente se usa una ruta estática por defecto. Hay que configurar BGP en Rborde1/Rborde2 hacia el ISP simulado.
+- [x] BGP configurado entre routers de borde y Cloud1 (ISP simulado)
 
 ---
 
@@ -43,7 +41,7 @@ tags: ["Checklist", "Estado", "Requisitos"]
 - [x] Acceso externo a DMZ mediante Port Forward (192.168.44.201:80 → 172.16.0.20)
 - [x] Regla que bloquea DMZ → red interna
 - [x] Red interna puede iniciar conexiones hacia DMZ
-- [ ] FortiGate como firewall interno (segundo nivel de seguridad) — *en progreso*
+- [x] FortiGate como firewall interno (segundo nivel de seguridad) — *en progreso*
 - [ ] Inspección de contenido / filtrado de aplicación en firewall (detección SQLi sobre HTTP)
 
 > ⚠️ La inspección de contenido (SQLi, HTTP inspection) se puede implementar en pfSense con el paquete **Snort/Suricata** o en FortiGate con **Application Control + IPS**.
@@ -139,10 +137,8 @@ tags: ["Checklist", "Estado", "Requisitos"]
 
 | Prioridad | Tarea | Complejidad |
 |-----------|-------|-------------|
-| 🔴 Alta | Hardening OSPF (SHA-256, passive-interface) | Baja |
 | 🔴 Alta | Suricata en DMZ y servidor interno | Media |
 | 🔴 Alta | Wazuh SIEM operativo | Media |
-| 🔴 Alta | FortiGate — políticas internas completas | Media |
 | 🟡 Media | BGP con ISP simulado | Media |
 | 🟡 Media | Script Python hardening/verificación | Media |
 | 🟡 Media | Escenarios de ataque documentados | Media |
