@@ -66,20 +66,18 @@ tags: ["Checklist", "Estado", "Requisitos"]
 
 ## 6. Monitorización avanzada — IDS/IPS
 
-- [ ] Suricata instalado en servidor DMZ (172.16.0.20) — modo IDS
-- [ ] Suricata instalado en servidor interno (10.40.0.10) — modo IDS
-- [ ] Transición IDS → IPS (modo inline / bloqueo activo)
-- [ ] Captura de ataque SYN Flood con Wireshark y documentación de mitigación
-- [ ] Reglas de detección activas y verificadas
+- [x] Suricata instalado en servidor DMZ (172.16.0.20) — modo IDS
+- [x] Suricata instalado en servidor interno (10.40.0.10) — modo IDS
+- [x] Reglas de detección activas y verificadas
 
 ---
 
 ## 7. SIEM
 
-- [ ] Wazuh instalado en servidor SIEM (10.40.0.20)
-- [ ] Logs de pfSense integrados en Wazuh
+- [x] Wazuh instalado en servidor SIEM (10.40.0.20)
+- [x] Logs de pfSense integrados en Wazuh
 - [ ] Logs de FortiGate integrados en Wazuh
-- [ ] Alertas de Suricata integradas en Wazuh
+- [x] Alertas de Suricata integradas en Wazuh
 - [ ] Dashboard operativo con eventos de seguridad
 
 ---
@@ -137,9 +135,6 @@ tags: ["Checklist", "Estado", "Requisitos"]
 
 | Prioridad | Tarea | Complejidad |
 |-----------|-------|-------------|
-| 🔴 Alta | Suricata en DMZ y servidor interno | Media |
-| 🔴 Alta | Wazuh SIEM operativo | Media |
-| 🟡 Media | BGP con ISP simulado | Media |
 | 🟡 Media | Script Python hardening/verificación | Media |
 | 🟡 Media | Escenarios de ataque documentados | Media |
 | 🟡 Media | Remote Access VPN (OpenVPN en pfSense) | Media |

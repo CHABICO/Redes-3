@@ -65,18 +65,20 @@
 			<if>em0</if>
 			<descr><![CDATA[WAN]]></descr>
 			<spoofmac></spoofmac>
-			<ipaddr>10.10.0.10</ipaddr>
-			<subnet>24</subnet>
-			<gateway>WANGW</gateway>
-			<ipaddrv6>dhcp6</ipaddrv6>
+			<ipaddr>dhcp</ipaddr>
+			<subnet></subnet>
+			<gateway></gateway>
+			<ipaddrv6></ipaddrv6>
 			<dhcp6-duid></dhcp6-duid>
 			<dhcp6-ia-pd-len>0</dhcp6-ia-pd-len>
 			<adv_dhcp6_prefix_selected_interface>wan</adv_dhcp6_prefix_selected_interface>
+			<subnetv6></subnetv6>
+			<gatewayv6></gatewayv6>
 		</wan>
 		<lan>
 			<enable></enable>
 			<if>em1</if>
-			<ipaddr>10.20.0.1</ipaddr>
+			<ipaddr>10.10.0.1</ipaddr>
 			<subnet>24</subnet>
 			<ipaddrv6></ipaddrv6>
 			<subnetv6></subnetv6>
@@ -86,6 +88,7 @@
 			<track6-prefix-id>0</track6-prefix-id>
 			<gateway></gateway>
 			<gatewayv6></gatewayv6>
+			<descr><![CDATA[LAN]]></descr>
 		</lan>
 		<opt1>
 			<if>em5</if>
@@ -95,51 +98,31 @@
 			<ipaddr>172.16.0.1</ipaddr>
 			<subnet>24</subnet>
 		</opt1>
-		<opt2>
-			<if>em2</if>
-			<descr><![CDATA[ADMIN]]></descr>
-			<enable></enable>
-			<ipaddr>dhcp</ipaddr>
-			<dhcphostname></dhcphostname>
-			<alias-address></alias-address>
-			<alias-subnet>32</alias-subnet>
-			<dhcprejectfrom></dhcprejectfrom>
-			<adv_dhcp_pt_timeout></adv_dhcp_pt_timeout>
-			<adv_dhcp_pt_retry></adv_dhcp_pt_retry>
-			<adv_dhcp_pt_select_timeout></adv_dhcp_pt_select_timeout>
-			<adv_dhcp_pt_reboot></adv_dhcp_pt_reboot>
-			<adv_dhcp_pt_backoff_cutoff></adv_dhcp_pt_backoff_cutoff>
-			<adv_dhcp_pt_initial_interval></adv_dhcp_pt_initial_interval>
-			<adv_dhcp_pt_values>SavedCfg</adv_dhcp_pt_values>
-			<adv_dhcp_send_options></adv_dhcp_send_options>
-			<adv_dhcp_request_options></adv_dhcp_request_options>
-			<adv_dhcp_required_options></adv_dhcp_required_options>
-			<adv_dhcp_option_modifiers></adv_dhcp_option_modifiers>
-			<adv_dhcp_config_advanced></adv_dhcp_config_advanced>
-			<adv_dhcp_config_file_override></adv_dhcp_config_file_override>
-			<adv_dhcp_config_file_override_path></adv_dhcp_config_file_override_path>
-			<spoofmac></spoofmac>
-		</opt2>
 	</interfaces>
 	<staticroutes>
 		<route>
 			<network>192.168.10.0/24</network>
-			<gateway>GW_FORTIGATE</gateway>
+			<gateway>GW_VIP</gateway>
 			<descr></descr>
 		</route>
 		<route>
 			<network>192.168.11.0/24</network>
-			<gateway>GW_FORTIGATE</gateway>
+			<gateway>GW_VIP</gateway>
 			<descr></descr>
 		</route>
 		<route>
 			<network>10.30.0.0/24</network>
-			<gateway>GW_FORTIGATE</gateway>
+			<gateway>GW_VIP</gateway>
 			<descr></descr>
 		</route>
 		<route>
 			<network>10.40.0.0/24</network>
-			<gateway>GW_FORTIGATE</gateway>
+			<gateway>GW_VIP</gateway>
+			<descr></descr>
+		</route>
+		<route>
+			<network>10.20.0.0/24</network>
+			<gateway>GW_VIP</gateway>
 			<descr></descr>
 		</route>
 	</staticroutes>
@@ -839,6 +822,54 @@
 				<username><![CDATA[admin@192.168.44.1 (Local Database)]]></username>
 			</updated>
 		</rule>
+		<rule>
+			<source>
+				<any></any>
+			</source>
+			<destination>
+				<network>wanip</network>
+				<port>8888</port>
+			</destination>
+			<ipprotocol>inet</ipprotocol>
+			<protocol>tcp</protocol>
+			<target>10.20.0.1</target>
+			<local-port>80</local-port>
+			<interface>wan</interface>
+			<descr><![CDATA[HTTP hacia FORTI]]></descr>
+			<associated-rule-id>nat_6a0641d6adcf59.02835699</associated-rule-id>
+			<updated>
+				<time>1778794966</time>
+				<username><![CDATA[admin@10.10.0.10 (Local Database)]]></username>
+			</updated>
+			<created>
+				<time>1778794966</time>
+				<username><![CDATA[admin@10.10.0.10 (Local Database)]]></username>
+			</created>
+		</rule>
+		<rule>
+			<source>
+				<any></any>
+			</source>
+			<destination>
+				<network>wanip</network>
+				<port>9999</port>
+			</destination>
+			<ipprotocol>inet</ipprotocol>
+			<protocol>tcp</protocol>
+			<target>10.10.0.1</target>
+			<local-port>80</local-port>
+			<interface>wan</interface>
+			<descr><![CDATA[HTTP hacia PFSENSE]]></descr>
+			<associated-rule-id>nat_6a06464f782b53.97211417</associated-rule-id>
+			<created>
+				<time>1778796111</time>
+				<username><![CDATA[admin@10.10.0.10 (Local Database)]]></username>
+			</created>
+			<updated>
+				<time>1778796175</time>
+				<username><![CDATA[admin@10.10.0.10 (Local Database)]]></username>
+			</updated>
+		</rule>
 	</nat>
 	<filter>
 		<rule>
@@ -894,6 +925,44 @@
 			</created>
 		</rule>
 		<rule>
+			<source>
+				<any></any>
+			</source>
+			<interface>wan</interface>
+			<ipprotocol>inet</ipprotocol>
+			<protocol>tcp</protocol>
+			<destination>
+				<address>10.20.0.1</address>
+				<port>80</port>
+			</destination>
+			<descr><![CDATA[NAT HTTP hacia FORTI]]></descr>
+			<associated-rule-id>nat_6a0641d6adcf59.02835699</associated-rule-id>
+			<tracker>1778794966</tracker>
+			<created>
+				<time>1778794966</time>
+				<username><![CDATA[NAT Port Forward]]></username>
+			</created>
+		</rule>
+		<rule>
+			<source>
+				<any></any>
+			</source>
+			<interface>wan</interface>
+			<ipprotocol>inet</ipprotocol>
+			<protocol>tcp</protocol>
+			<destination>
+				<address>10.10.0.1</address>
+				<port>80</port>
+			</destination>
+			<descr><![CDATA[NAT HTTP hacia PFSENSE]]></descr>
+			<associated-rule-id>nat_6a06464f782b53.97211417</associated-rule-id>
+			<tracker>1778796111</tracker>
+			<created>
+				<time>1778796111</time>
+				<username><![CDATA[NAT Port Forward]]></username>
+			</created>
+		</rule>
+		<rule>
 			<id></id>
 			<tracker>1777377334</tracker>
 			<type>pass</type>
@@ -910,20 +979,20 @@
 			<os></os>
 			<protocol>tcp</protocol>
 			<source>
-				<address>10.20.0.0/24</address>
+				<address>10.10.0.0/24</address>
 			</source>
 			<destination>
 				<any></any>
 			</destination>
 			<descr><![CDATA[LAN hacia cualquier destino]]></descr>
-			<updated>
-				<time>1777377334</time>
-				<username><![CDATA[admin@192.168.44.1 (Local Database)]]></username>
-			</updated>
 			<created>
 				<time>1777377334</time>
 				<username><![CDATA[admin@192.168.44.1 (Local Database)]]></username>
 			</created>
+			<updated>
+				<time>1778791547</time>
+				<username><![CDATA[admin@10.10.0.10 (Local Database)]]></username>
+			</updated>
 		</rule>
 		<rule>
 			<type>pass</type>
@@ -1141,26 +1210,18 @@
 	<vlans></vlans>
 	<qinqs></qinqs>
 	<revision>
-		<time>1777395066</time>
-		<description><![CDATA[admin@192.168.44.1 (Local Database): Firewall: NAT: Outbound - saved/edited outbound NAT mapping.]]></description>
+		<time>1778796220</time>
+		<description><![CDATA[admin@192.168.44.1 (Local Database): Firewall: Rules - deleted a firewall rule.]]></description>
 		<username><![CDATA[admin@192.168.44.1 (Local Database)]]></username>
 	</revision>
 	<gateways>
 		<gateway_item>
-			<interface>wan</interface>
-			<gateway>10.10.0.1</gateway>
-			<name>WANGW</name>
-			<weight>1</weight>
-			<descr><![CDATA[WAN Gateway]]></descr>
-			<defaultgw></defaultgw>
-		</gateway_item>
-		<gateway_item>
 			<interface>lan</interface>
-			<gateway>10.20.0.2</gateway>
-			<name>GW_FORTIGATE</name>
+			<gateway>10.10.0.2</gateway>
+			<name>GW_VIP</name>
 			<weight>1</weight>
 			<ipprotocol>inet</ipprotocol>
-			<descr><![CDATA[FortiGate port1]]></descr>
+			<descr></descr>
 			<gw_down_kill_states></gw_down_kill_states>
 		</gateway_item>
 		<defaultgw4></defaultgw4>
