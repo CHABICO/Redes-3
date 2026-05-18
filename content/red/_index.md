@@ -3,7 +3,7 @@ title: "Red"
 ---
 # Topología de Red
 ## Proximamente 
-![topología de red nueva](__/images/recursos/topologia.png__)
+![topología de red nueva](/images/recursos/topologia.png)
 ---
 # Direccionamiento de Red
 
