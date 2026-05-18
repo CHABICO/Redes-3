@@ -8,9 +8,9 @@ tags: ["pfSense", "Firewall", "DMZ", "NAT", "Segmentación", "Seguridad"]
 
 ## Contexto y Objetivo
 
-Tras estabilizar la alta disponibilidad en el borde con los routers Cisco, el siguiente paso es la integración del firewall **pfSense**. Este dispositivo actúa como primera línea de defensa interna, encargándose de la inspección de paquetes, el filtrado de tráfico entre zonas y la publicación de servicios hacia el exterior mediante NAT.
+## Contexto y Objetivo
 
-pfSense se conecta al clúster HSRP a través del segmento `10.10.0.0/24`, recibiendo el tráfico externo a través de la VIP `10.10.0.1`. Internamente, segmenta la infraestructura en cuatro zonas diferenciadas para aplicar políticas de seguridad granulares.
+pfSense actúa como primera línea de defensa perimetral de la infraestructura. Recibe el tráfico directamente desde Cloud1 (ISP simulado) por la interfaz WAN, y lo distribuye hacia los routers de borde (Rborde1/Rborde2) por la interfaz LAN. También gestiona la zona DMZ donde se aloja el servidor público, y aplica NAT para que las redes internas puedan salir a internet.
 
 ![topología GNS3 - pfSense](/images/recursos/topología-pfsense.png)
 
@@ -20,27 +20,27 @@ pfSense se conecta al clúster HSRP a través del segmento `10.10.0.0/24`, recib
 
 | Interfaz | Etiqueta pfSense | IP / Máscara | Notas |
 |----------|------------------|--------------|-------|
-| **em0** | WAN | `10.10.0.10/24` | Gateway: `10.10.0.1` (VIP HSRP interna) |
-| **em1** | LAN | `10.20.0.1/24` | Hacia FortiGate port1 |
-| **em5** | DMZ | `172.16.0.1/24` | Zona servidores públicos |
-| **em2** | ADMIN | `DHCP` | Gestión CloudNAT |
+| **em0** | WAN | Estática (`192.168.44.139/24`) | Conectada a Cloud1 (ISP simulado) |
+| **em1** | LAN | `10.10.0.1/24` | Hacia Switch1 → Rborde1/Rborde2 |
+| **em5** | DMZ | `172.16.0.1/24` | Zona servidor público |
 
-![cuatro interfaces con sus IPs y estado up](/images/recursos/interfaces-pfsense.png)
+![interfaces con sus IPs y estado up](/images/recursos/interfaces-pfsense.png)
 
 ---
 
 ## Enrutamiento
 
-El enrutamiento estático se configuró en **System → Routing** para que pfSense conozca las redes internas que viven detrás del FortiGate:
+pfSense conoce las redes internas mediante rutas estáticas configuradas en **System → Routing → Static Routes**, todas apuntando al VIP HSRP de los Rborde (`10.10.0.2`) como siguiente salto:
 
 | Red destino | Gateway | Descripción |
 |-------------|---------|-------------|
-| `192.168.10.0/24` | `10.20.0.2` | VLAN10 vía FortiGate |
-| `192.168.11.0/24` | `10.20.0.2` | VLAN11 vía FortiGate |
-| `10.30.0.0/24` | `10.20.0.2` | Red VLANs (IOU1/R1) vía FortiGate |
-| `10.40.0.0/24` | `10.20.0.2` | Servidores internos vía FortiGate |
+| `192.168.10.0/24` | `GW_VIP - 10.10.0.2` | VLAN10 vía Rborde → FortiGate → R1 |
+| `192.168.11.0/24` | `GW_VIP - 10.10.0.2` | VLAN11 vía Rborde → FortiGate → R1 |
+| `10.20.0.0/24` | `GW_VIP - 10.10.0.2` | Red FortiGate-Rborde |
+| `10.30.0.0/24` | `GW_VIP - 10.10.0.2` | Red FortiGate-R1 |
+| `10.40.0.0/24` | `GW_VIP - 10.10.0.2` | Servidores internos |
 
-El gateway `10.20.0.2` corresponde a **port1 del FortiGate**, que actúa como siguiente salto para todas las redes internas.
+El gateway por defecto para salida a internet (`WAN_DHCP`) está definido en **System → Routing → Gateways** apuntando al gateway de Cloud1.
 
 ---
 
@@ -48,89 +48,79 @@ El gateway `10.20.0.2` corresponde a **port1 del FortiGate**, que actúa como si
 
 ### Interfaz WAN
 
-La interfaz WAN tiene desactivadas las opciones **Block private networks** y **Block bogon networks**, necesario porque el segmento `10.10.0.0/24` es una red privada RFC1918 y pfSense la bloquearía por defecto.
+Las opciones **Block private networks** y **Block bogon networks** están desactivadas en la interfaz WAN.
 
 | Acción | Protocolo | Origen | Destino | Puerto | Descripción |
 |--------|-----------|--------|---------|--------|-------------|
-| Pass | TCP | any | WAN address | 80 | Acceso web DMZ |
-| Pass | TCP | any | WAN address | 8443 | Acceso WebGUI (temporal) |
+| Pass | TCP | any | WAN address | 80 | HTTP hacia servidor DMZ |
+| Pass | TCP | any | WAN address | 8888 | Acceso GUI FortiGate |
+| Pass | TCP | any | WAN address | 9999 | Acceso GUI pfSense |
+| Pass | TCP | any | WAN address | 7777 | Acceso dashboard Wazuh |
+| Pass | TCP | any | WAN address | 22 | SSH administración |
 
-![reglas WAN](/images/recursos/reglas-wan-pfsense.png)
+### Interfaz LAN
+
+| Acción | Protocolo | Origen | Destino | Puerto | Descripción |
+|--------|-----------|--------|---------|--------|-------------|
+| Pass | any | any | any | any | Permitir redes internas hacia internet |
+| Pass | IPv4 TCP | `10.10.0.0/24` | any | any | LAN hacia cualquier destino |
+| Pass | IPv4 * | LAN subnets | any | any | Default allow LAN to any rule |
 
 ### Interfaz DMZ
 
 | Acción | Protocolo | Origen | Destino | Puerto | Descripción |
 |--------|-----------|--------|---------|--------|-------------|
-| Block | any | `172.16.0.0/24` | `10.20.0.0/24` | any | DMZ no accede a LAN |
-| Pass | TCP | `172.16.0.0/24` | any | 80, 443 | DMZ sale a Internet |
-| Block | any | `172.16.0.0/24` | any | any | Denegar resto |
-
-### Interfaz ADMIN
-
-Acceso total desde la red de gestión para permitir administración vía WebGUI:
-
-| Acción | Protocolo | Origen | Destino | Descripción |
-|--------|-----------|--------|---------|-------------|
-| Pass | any | `10.30.0.0/24` | any | Allow gestión |
+| Pass | IPv4 * | `172.16.0.0/24` | `10.40.0.20` | 1514, 1515 | DMZ hacia SIEM Wazuh |
+| Block | IPv4 TCP | `172.16.0.0/24` | `10.10.0.0/24` | any | DMZ no accede a LAN |
+| Pass | IPv4 * | `172.16.0.0/24` | any | any | DMZ sale a Internet |
 
 ---
 
-## NAT — Port Forwarding hacia DMZ
+## NAT
 
-Para exponer el servidor web de la DMZ hacia el exterior, se configuró una regla de **Port Forward** en **Firewall → NAT → Port Forward**:
+### Port Forwarding
 
-| Campo | Valor |
-|-------|-------|
-| Interface | WAN |
-| Protocol | TCP |
-| Dest. Address | WAN address (`10.10.0.10`) |
-| Dest. Port | 80 |
-| NAT IP | `172.16.0.20` |
-| NAT Port | 80 |
+Se han configurado cuatro reglas de port forwarding para acceder a los servicios internos desde el exterior:
 
-El flujo completo del tráfico entrante es el siguiente:
+| Puerto externo | Destino interno | Descripción |
+|----------------|-----------------|-------------|
+| `80` | `172.16.0.20:80` | Servidor web DMZ |
+| `8888` | `10.20.0.1:443` | GUI FortiGate |
+| `9999` | `10.10.0.1:443` | GUI pfSense |
+| `7777` | `10.40.0.20:443` | Dashboard Wazuh |
 
-```
-PC externo → 192.168.44.201 (VIP HSRP externa)
-  → Rborde1 reenvía a 10.10.0.10 (pfSense WAN)
-    → Port Forward redirige a 172.16.0.20 (servidor DMZ)
-      → Apache responde
-```
-
-![regla HTTP hacia DMZ](/images/recursos/portforwarding-pfsense.png)
+[🔴 imagen mostrando las reglas de port forwarding en Firewall → NAT → Port Forward]
 
 ### NAT Outbound
 
-Configurado en modo **Manual** con dos reglas para permitir salida a Internet:
+Configurado en modo **Hybrid** para combinar reglas automáticas con reglas manuales adicionales. Las reglas manuales garantizan que todas las redes internas reciben NAT correctamente al salir por la WAN:
 
 | Interface | Source | NAT Address | Descripción |
 |-----------|--------|-------------|-------------|
-| WAN | `172.16.0.0/24` | WAN address | Salida DMZ |
-| WAN | `10.20.0.0/24` | WAN address | Salida LAN |
+| WAN | `192.168.10.0/24` | WAN address | NAT VLAN10 |
+| WAN | `192.168.11.0/24` | WAN address | NAT VLAN11 |
+| WAN | `172.16.0.0/24` | WAN address | NAT DMZ |
+| WAN | `10.20.0.0/24` | WAN address | NAT red FortiGate |
+| WAN | `10.30.0.0/24` | WAN address | NAT red R1 |
+| WAN | `10.40.0.0/24` | WAN address | NAT servidores internos |
 
----
+Adicionalmente se han configurado reglas **No NAT** para excluir el tráfico VPN site-to-site del proceso de traducción, garantizando que los paquetes entre edificios mantienen sus IPs originales al entrar en el túnel IPsec:
 
-## Verificación
-
-La verificación del correcto funcionamiento se realizó accediendo desde un navegador externo a `http://192.168.44.201`, obteniendo la página de bienvenida del servidor Apache en la DMZ.
-
-![navegador mostrando la página web del servidor DMZ accedida desde fuera via 192.168.44.201](/images/recursos/web-dmz.png)
-
-Desde la consola de pfSense se verificó también mediante `tcpdump` que el tráfico entrante en `em0` era correctamente redirigido hacia `em5` (DMZ):
-
-```bash
-tcpdump -i em0 tcp port 80
-tcpdump -i em5 tcp port 80
-```
+| Interface | Source | Destination | Acción |
+|-----------|--------|-------------|--------|
+| WAN | `192.168.10.0/24` | `192.168.20.0/24` | No NAT |
+| WAN | `192.168.11.0/24` | `192.168.21.0/24` | No NAT |
 
 ---
 
 ## Incidencias durante la implementación
 
-Durante la configuración se encontraron las siguientes incidencias relevantes documentadas para la memoria:
+**Conflicto WAN/LAN en misma subred:** Al reestructurar la topología, pfSense tenía WAN y LAN en la misma red `192.168.44.0/24`, lo que impedía el enrutamiento correcto. Se resolvió asignando `10.10.0.1/24` a la LAN.
 
-**Acceso al WebGUI bloqueado:** pfSense por defecto no permite acceso al WebGUI desde interfaces que no sean LAN. Se resolvió habilitando SSH desde la consola y ejecutando `pfctl -d` para desactivar temporalmente el firewall y poder añadir la regla de gestión desde el GUI.
+**NAT no aplicaba a redes internas:** pfSense en modo automático solo hace NAT para redes directamente conectadas. Se resolvió cambiando a modo Hybrid y añadiendo reglas manuales para cada subred interna.
 
-**Block private networks:** La regla estaba bloqueando el tráfico legítimo en la interfaz WAN ya que el segmento `10.10.0.0/24` es RFC1918. Se desactivó explícitamente en la configuración de la interfaz WAN.
+**Routing asimétrico con FortiGate:** El FortiGate hacía NAT con su propia IP antes de mandar tráfico a los Rborde. Se resolvió eliminando el NAT en las políticas del FortiGate hacia port1.
 
-**Gateway toWAN sendto error 64:** Error de monitorización del gateway causado por un problema temporal de conectividad durante la configuración. Se resolvió tras reiniciar pfSense una vez completada la configuración de interfaces y rutas.
+**Anti-spoofing pfSense:** pfSense bloqueaba silenciosamente paquetes que llegaban por LAN con origen en redes no directamente conectadas. Se resolvió añadiendo rutas estáticas explícitas para cada red interna.
+
+**Routing de retorno desde los Rborde:** Los Rborde no tenían rutas de vuelta hacia las redes internas, por lo que las respuestas no llegaban a los clientes. Se resolvió añadiendo rutas estáticas en los Rborde apuntando al FortiGate (`10.20.0.1`) para cada red interna.

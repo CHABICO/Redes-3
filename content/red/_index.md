@@ -5,7 +5,6 @@ title: "Red"
 # Topología de Red
 
 ## Proximamente 
-🚧 estamos trabajando en ello para hacer una infraestructura más segura 🚧
 
 ![topología de red nueva](/images/recursos/topologia.png)
 

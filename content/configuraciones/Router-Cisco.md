@@ -3,49 +3,193 @@ title: "Configuración de Routers, Switches y VLANs"
 date: 2026-02-26
 summary: "Evolución de la topología de red: desde el aislamiento básico mediante VLANs hasta el enrutamiento inter-sedes y la fortificación de la capa 2."
 author: "Xavier C., Òscar F., Gerard S."
+tags: ["Router", "Switch", "VLANs", "DHCP", "Seguridad", "Capa2"]
 ---
 
-## Contexto y Evolución de la Topología
+## Contexto y Topología
 
-El proyecto comenzó con el objetivo de configurar una red segura básica estableciendo conectividad entre dispositivos utilizando un router y un switch de Cisco. Inicialmente, el tráfico se segmentó en dos redes virtuales (VLAN 10 y VLAN 11). 
+R1 (Edificio 1) y R2 (Edificio 2) actúan como gateways de las VLANs internas de cada edificio. Cada router tiene una interfaz hacia el FortiGate y subinterfaces hacia los switches IOU que gestionan las VLANs de usuarios.
 
-Posteriormente, la topología evolucionó hacia un entorno multi-sede. Desplegamos dos enrutadores principales (R1 y R2) que actúan como puertas de enlace para distintas VLANs, separados e interconectados mediante un Firewall central.
+```
+FortiGate port2 (10.30.0.1)
+        ↓
+   R1 Fa0/0 (10.30.0.2)
+        ↓
+   IOU1 (switch L2)
+        ├── Fa0/1.10 → VLAN10 (192.168.10.0/24)
+        └── Fa0/1.11 → VLAN11 (192.168.11.0/24)
+```
 
-## Direccionamiento y Enrutamiento (Routers R1 y R2)
+El Edificio 2 replica esta estructura con R2 e IOU2, usando las redes `192.168.20.0/24` y `192.168.21.0/24` para evitar solapamiento con el Edificio 1.
 
-Para garantizar la correcta segmentación, asignamos un esquema de direccionamiento IPv4 para cada interfaz y subinterfaz de los routers:
+---
 
-* **Router 1 (Sede A):**
-    * `f0/0` (Hacia el Firewall): 200.20.2.2 /24
-    * `f0/1` (VLAN 10 - Red Interna 1): 192.168.10.1 /24
-    * `f1/0` (VLAN 11 - Red Interna 2): 192.168.11.1 /24
-* **Router 2 (Sede B):**
-    * `f0/0` (Hacia el Firewall): 200.30.3.2 /24
-    * `f0/1` (VLAN 20 - Red Interna 3): 192.168.20.1 /24
-    * `f1/0` (VLAN 21 - Red Interna 4): 192.168.21.1 /24
+## Direccionamiento
 
-*(Nota: Las credenciales de acceso para R1 y R2 son `r1/r2` con la contraseña `cisco`)*.
+### Edificio 1 — R1
 
-## Fortificación de Capa 2 (Switches)
+| Interfaz | IP | Descripción |
+|----------|----|-------------|
+| `Fa0/0` | `10.30.0.2/24` | Hacia FortiGate port2 |
+| `Fa0/1.10` | `192.168.10.1/24` | Gateway VLAN10 |
+| `Fa0/1.11` | `192.168.11.1/24` | Gateway VLAN11 |
 
-La seguridad en la capa de acceso es vital. Por ello, aplicamos un bastionado ('hardening') a los switches siguiendo buenas prácticas de la industria:
+### Edificio 2 — R2
 
-### 1. Control de Acceso y Gestión
-* **Gestión Segura:** Accesos administrativos restringidos mediante SSH (cifrado) y configuración de `exec-timeout` para cerrar sesiones inactivas.
-* **Avisos Legales:** Implementación de un `banner motd` para advertir sobre el acceso no autorizado.
-* **Protección de Credenciales:** Habilitado `service password-encryption` para ofuscar contraseñas en los archivos de configuración.
+| Interfaz | IP | Descripción |
+|----------|----|-------------|
+| `Fa0/0` | `10.30.0.2/24` | Hacia FortiGate port2 |
+| `Fa0/1.10` | `192.168.20.1/24` | Gateway VLAN20 |
+| `Fa0/1.11` | `192.168.21.1/24` | Gateway VLAN21 |
 
-### 2. Seguridad en Puertos (Port Security)
-* **Límite de MACs:** Restringimos el número de direcciones MAC permitidas a 2 por puerto.
-* **Modo de Violación:** Configurado en `Restrict`, de forma que si se detecta una intrusión, se descarta el tráfico no autorizado y se genera un log, pero el puerto no se apaga completamente.
-* **Aprendizaje:** Uso de `mac-address sticky` para el aprendizaje dinámico y retención de las direcciones legítimas.
+---
 
-### 3. Mitigación de Ataques de Spoofing
-Para evitar ataques Man-in-the-Middle donde un atacante falsifica su identidad en la red, implementamos:
-* **DHCP Snooping:** Valida los mensajes DHCP para evitar que servidores no autorizados entreguen configuraciones falsas.
-* **Dynamic ARP Inspection (DAI):** Inspecciona los paquetes ARP cruzándolos con bases de datos de confianza para descartar correspondencias MAC/IP inválidas.
-* **IP Source Guard:** Vincula la IP, la MAC y el puerto, bloqueando tráfico de hosts con IPs no asignadas legítimamente.
+## Configuración R1 — Edificio 1
 
-### 4. Estabilidad y Prevención de Bucles
-* Habilitamos `spanning-tree portfast` para acelerar la convergencia en puertos de acceso y `bpduguard` para prevenir la inyección maliciosa de tramas BPDU que alteren la topología STP.
-* **Gestión de Puertos Libres:** Todos los puertos no utilizados se configuraron en modo `shutdown` y se asignaron a una "Blackhole VLAN" (una VLAN sin tráfico), desactivando además el protocolo DTP para evitar negociaciones troncales indeseadas.
+```bash
+interface FastEthernet0/0
+ ip address 10.30.0.2 255.255.255.0
+ no shutdown
+
+interface FastEthernet0/1.10
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+
+interface FastEthernet0/1.11
+ encapsulation dot1Q 11
+ ip address 192.168.11.1 255.255.255.0
+
+ip route 0.0.0.0 0.0.0.0 10.30.0.1
+ip route 192.168.20.0 255.255.255.0 10.30.0.1
+ip route 192.168.21.0 255.255.255.0 10.30.0.1
+ip route 10.40.0.0 255.255.255.0 10.30.0.1
+```
+
+## Configuración R2 — Edificio 2
+
+```bash
+interface FastEthernet0/0
+ ip address 10.30.0.2 255.255.255.0
+ no shutdown
+
+interface FastEthernet0/1.10
+ encapsulation dot1Q 10
+ ip address 192.168.20.1 255.255.255.0
+
+interface FastEthernet0/1.11
+ encapsulation dot1Q 11
+ ip address 192.168.21.1 255.255.255.0
+
+ip route 0.0.0.0 0.0.0.0 10.30.0.1
+ip route 192.168.10.0 255.255.255.0 10.30.0.1
+ip route 192.168.11.0 255.255.255.0 10.30.0.1
+```
+
+---
+
+## DHCP
+
+El servicio DHCP está configurado en cada router para asignar IPs dinámicamente a los clientes de cada VLAN.
+
+### R1 — Edificio 1
+
+```bash
+ip dhcp excluded-address 192.168.10.1
+ip dhcp excluded-address 192.168.11.1
+
+ip dhcp pool VLAN_10
+ network 192.168.10.0 255.255.255.0
+ default-router 192.168.10.1
+ dns-server 8.8.8.8
+
+ip dhcp pool VLAN_11
+ network 192.168.11.0 255.255.255.0
+ default-router 192.168.11.1
+ dns-server 8.8.8.8
+```
+
+### R2 — Edificio 2
+
+```bash
+ip dhcp excluded-address 192.168.20.1
+ip dhcp excluded-address 192.168.21.1
+
+ip dhcp pool VLAN_20
+ network 192.168.20.0 255.255.255.0
+ default-router 192.168.20.1
+ dns-server 8.8.8.8
+
+ip dhcp pool VLAN_21
+ network 192.168.21.0 255.255.255.0
+ default-router 192.168.21.1
+ dns-server 8.8.8.8
+```
+
+---
+
+## Bastionado de Capa 2 — IOU1/IOU2
+
+Los switches IOU gestionan el tronco 802.1Q hacia los routers y los puertos de acceso hacia los clientes. Se han aplicado medidas de seguridad en la capa de acceso.
+
+### Control de acceso y gestión
+
+* **Gestión segura:** Accesos administrativos restringidos mediante SSH con `exec-timeout` para cerrar sesiones inactivas.
+* **Cifrado de contraseñas:** Habilitado `service password-encryption`.
+* **Banner de aviso legal:** Implementado `banner motd` para advertir sobre acceso no autorizado.
+
+### Port Security
+
+```bash
+switchport port-security maximum 2
+switchport port-security violation restrict
+switchport port-security mac-address sticky
+```
+
+Límite de 2 MACs por puerto. En modo `restrict`, el tráfico no autorizado se descarta y se genera un log sin apagar el puerto.
+
+### Mitigación de ataques de spoofing
+
+```bash
+# DHCP Snooping
+ip dhcp snooping
+ip dhcp snooping vlan 10,11
+
+# Dynamic ARP Inspection
+ip arp inspection vlan 10,11
+
+# IP Source Guard (en puertos de acceso)
+ip verify source
+```
+
+### Prevención de bucles
+
+```bash
+# Portfast en puertos de acceso
+spanning-tree portfast
+
+# BPDU Guard para evitar inyección de tramas BPDU
+spanning-tree bpduguard enable
+```
+
+### Gestión de puertos no utilizados
+
+```bash
+# Apagar puertos libres y asignarlos a VLAN blackhole
+interface range FastEthernet0/X - Y
+ switchport access vlan 999
+ shutdown
+ switchport nonegotiate
+```
+
+---
+
+## Cambio de IPs en Edificio 2
+
+Al implementar la VPN site-to-site entre edificios, se detectó que ambos edificios usaban las mismas redes (`192.168.10.0/24` y `192.168.11.0/24`), lo que causaría solapamiento en el túnel IPsec. Se renombraron las VLANs del Edificio 2:
+
+| Red original | Red nueva | Motivo |
+|--------------|-----------|--------|
+| `192.168.10.0/24` | `192.168.20.0/24` | Evitar solapamiento VPN |
+| `192.168.11.0/24` | `192.168.21.0/24` | Evitar solapamiento VPN |
+
+El cambio implicó actualizar: subinterfaces de R2, pools DHCP de R2, rutas estáticas en FortiGate Edificio 2, rutas estáticas en Rborde3/Rborde4 y reglas NAT en pfSense Edificio 2.

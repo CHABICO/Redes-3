@@ -1,7 +1,8 @@
 ---
-title: "Configuración de DMZ y Servicios con Docker"
+title: "Configuración de DMZ"
 date: 2026-02-26
 summary: "Diseño de una arquitectura de 3 zonas y despliegue de servicios corporativos (DNS, Web, Correo) mediante contenedores en un servidor Ubuntu alojado en la DMZ."
+tags: ["DMZ", "Ubuntu", "Apache", "IDS", "Suricata", "Seguridad"]
 ---
 
 
@@ -23,46 +24,129 @@ summary: "Diseño de una arquitectura de 3 zonas y despliegue de servicios corpo
 
 <br>
 
-## Arquitectura de 3 Zonas (Inside, Outside, DMZ)
+## Contexto y Objetivo
 
-Para dotar a la red de un nivel de seguridad empresarial, evolucionamos la topología integrando una **Zona Desmilitarizada (DMZ)** en el firewall FortiGate. El objetivo de esta zona aislada es alojar los servicios públicos de la empresa (Web, DNS, Mail) de forma que sean accesibles desde el exterior (Outside) sin comprometer la seguridad de las redes internas de los usuarios (Inside).
+La DMZ (Zona Desmilitarizada) es una zona de red aislada que permite alojar servicios accesibles desde el exterior sin comprometer la seguridad de las redes internas. En esta infraestructura, la DMZ está conectada directamente a pfSense mediante la interfaz `em5`, con la red `172.16.0.0/24`.
 
-## Preparación del Servidor Host (Ubuntu)
+El servidor Ubuntu-Server-DMZ-1 (`172.16.0.20`) aloja el servicio web corporativo y ejecuta Suricata en modo IDS para monitorizar el tráfico de la zona.
 
-En lugar de usar los dispositivos virtuales básicos de GNS3, optamos por un entorno real. Desplegamos una máquina virtual con **Ubuntu Server** (obtenida mediante *Osboxes*) y adaptamos las interfaces de red de VMware para integrarla transparentemente dentro de la topología de GNS3.
+```
+Internet → pfSense WAN (port 80)
+    → Port Forward → 172.16.0.20:80 (servidor DMZ)
+        → Apache responde
+```
 
-Para la gestión de los servicios, apostamos por una arquitectura basada en contenedores:
-1. Instalación del motor **Docker** y **Docker-Compose**.
-2. Despliegue de **Portainer** para disponer de una interfaz gráfica de gestión de contenedores.
-   * *Acceso de administración:* Usuario `admin` con contraseña `admin1234567`.
+---
 
-## Despliegue de Servicios Corporativos
+## Configuración de Red
 
-Dentro del servidor Ubuntu, levantamos los siguientes servicios para dar soporte a nuestro dominio ficticio corporativo: `novatech.cat`.
+El servidor tiene configuración estática en `/etc/netplan/`:
 
-### 1. Servidor DNS Autoritativo (BIND9)
-Implementamos un contenedor con BIND9 para gestionar la resolución de nombres de nuestra red. 
+```yaml
+network:
+  version: 2
+  ethernets:
+    ens33:
+      addresses:
+        - 172.16.0.20/24
+      routes:
+        - to: default
+          via: 172.16.0.1
+      nameservers:
+        addresses: [8.8.8.8]
+```
 
-* **Configuración previa del Host:** Por defecto, las distribuciones modernas de Linux utilizan `systemd-resolved`, el cual ocupa el puerto 53. Para que nuestro contenedor DNS pudiera escuchar peticiones, tuvimos que deshabilitar este servicio local y liberar el puerto 53 en el host.
-* **IP Asignada:** El servidor DNS quedó establecido en la dirección `200.40.4.10`.
+El gateway `172.16.0.1` corresponde a la interfaz DMZ de pfSense.
 
-### 2. Servidor de Correo Electrónico
-Implementamos la infraestructura de mensajería electrónica utilizando la imagen `docker-mailserver`, una solución robusta e integrada.
+---
 
-* **Protocolos habilitados:** * **SMTP (Puerto 25):** Para el enrutamiento y envío de correos.
-  * **IMAP (Puerto 143):** Para la sincronización y lectura de buzones por parte de los clientes.
-* **Persistencia de datos:** Para evitar la pérdida de correos si el contenedor se reinicia, mapeamos volúmenes locales en el host para `maildata` (que almacena el cuerpo de los mensajes) y `mailstate` (que guarda las configuraciones y estados de los usuarios).
-* **Cuentas creadas:** Se inicializó el sistema con la cuenta administradora `admin@novatech.cat`.
+## Servicio Web
+
+El servidor web se basa en **Apache2**, instalado directamente en el sistema operativo:
+
+```bash
+sudo apt update
+sudo apt install -y apache2
+sudo systemctl enable apache2
+sudo systemctl start apache2
+```
+
+La página web es accesible desde el exterior mediante el port forwarding configurado en pfSense:
+
+```
+http://192.168.44.139:80 → 172.16.0.20:80
+```
+
+![navegador accediendo a la web del servidor DMZ desde fuera](/images/recursos/web-dmz.png)
 
 
+---
 
-## Resolución de Incidencias (Troubleshooting)
+## Suricata IDS
+Suricata está instalado y configurado en modo IDS para monitorizar el tráfico que entra y sale de la DMZ.
 
-### El problema del "Falso Servidor Web" (Error de Resolución DNS)
-Durante las pruebas de validación de la DMZ, intentamos acceder a la web corporativa local ejecutando `curl novatech.cat` desde la consola. En lugar de nuestra página, la terminal devolvió un error *HTTP 301* asociado a un servidor "OpenResty" que no habíamos configurado.
+### Instalación
 
-**Diagnóstico:**
-Descubrimos que el comando `curl` estaba utilizando los servidores DNS globales del sistema operativo (configurados por defecto en Netplan para salir a internet), en lugar de consultar a nuestro contenedor BIND9 recién creado. Casualmente, `novatech.cat` es un dominio real registrado en Internet. Nuestra petición salía por la WAN, el DNS público resolvía la IP del propietario real en internet, y nos conectábamos a su servidor en lugar de al nuestro alojado en la DMZ.
+```bash
+sudo apt install -y suricata
+sudo suricata-update
+```
 
-**Solución:**
-Para validar que nuestro contenedor web funcionaba, usamos primero `curl http://localhost`, lo que devolvió correctamente nuestra web corporativa. Para solucionar el problema a nivel de red, reconfiguramos **Netplan** en el servidor y ajustamos el servicio DHCP de las redes internas (VLANs) para forzar que todos los equipos usaran nuestra IP `200.40.4.10` como DNS primario, priorizando así la resolución local antes de salir a Internet.
+### Configuración
+
+En `/etc/suricata/suricata.yaml`:
+
+```yaml
+af-packet:
+  - interface: ens33
+
+vars:
+  address-groups:
+    HOME_NET: "[172.16.0.0/24]"
+```
+
+### Reglas personalizadas
+
+En `/etc/suricata/rules/local.rules`:
+
+```
+alert icmp any any -> $HOME_NET any (msg:"ICMP Ping detectado"; sid:1000001; rev:1;)
+alert tcp any any -> $HOME_NET 80 (msg:"Acceso HTTP detectado"; sid:1000002; rev:1;)
+```
+
+---
+
+## Integración con Wazuh
+
+El agente Wazuh está instalado y conectado al manager SIEM (`10.40.0.20`) para centralizar las alertas de Suricata:
+
+```bash
+sudo WAZUH_MANAGER='10.40.0.20' WAZUH_AGENT_NAME='IDS-DMZ' dpkg -i wazuh-agent_4.7.5-1_amd64.deb
+sudo systemctl enable wazuh-agent
+sudo systemctl start wazuh-agent
+```
+
+En `/var/ossec/etc/ossec.conf` se ha añadido la integración con los logs de Suricata:
+
+```xml
+<localfile>
+  <log_format>json</log_format>
+  <location>/var/log/suricata/eve.json</location>
+</localfile>
+```
+
+---
+
+## Seguridad de la zona DMZ
+
+pfSense aplica las siguientes reglas para aislar la DMZ:
+
+* La DMZ **no puede acceder a la red LAN** (`10.10.0.0/24`), evitando movimiento lateral si el servidor es comprometido.
+* La DMZ **solo puede comunicarse con el SIEM** (`10.40.0.20`) por los puertos 1514 y 1515, para enviar alertas de Suricata.
+* La DMZ **sí puede salir a internet** para actualizaciones del sistema operativo y descarga de reglas de Suricata.
+
+---
+
+## Notas de implementación
+
+**Conectividad para instalación de paquetes:** Durante la instalación, el servidor DMZ tuvo problemas de conectividad por la topología de laboratorio. Se resolvió temporalmente conectando un adaptador NAT de VMware para la descarga de paquetes, y reconectando a la topología una vez completada la instalación.
