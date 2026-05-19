@@ -1,5 +1,4 @@
 <div class="header">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <div class="header-container">
     <a class="header-logo" href="{{ .Site.BaseURL }}">{{ .Site.Title }}</a>
     <div class="menu-main">
@@ -7,11 +6,10 @@
         {{ $currentPage := . }}
         {{ range .Site.Menus.main }}
           {{ if not (and (eq .Identifier "about") (not $.Site.Params.showAboutPage)) }}
-            
-            {{ $isActive := or (eq $currentPage.RelPermalink .URL) (and (ne .URL "/") (hasPrefix $currentPage.RelPermalink .URL)) }}
-            
-            <li class="{{ if $isActive }}active{{ end }}">
-              <a href="{{ .URL }}" data-section="{{ trim .URL "/" }}">{{ .Name | safeHTML }}</a>
+            {{ $menuURL := .URL | strings.TrimRight "/" }}
+            {{ $pageURL := $currentPage.RelPermalink | strings.TrimRight "/" }}
+            <li class="{{ if or (eq $menuURL $pageURL) (and (ne $menuURL "") (hasPrefix $pageURL $menuURL)) }}active{{ end }}">
+              <a href="{{ .URL }}" data-section="{{ trim .URL "/" }}">{{ .Name }}</a>
             </li>
           {{ end }}
         {{ end }}
@@ -29,7 +27,6 @@
     </div>
   </div>
 </div>
-
 <script>
 window.Hugo = {
   showAboutPage: {{ .Site.Params.showAboutPage }}
