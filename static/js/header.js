@@ -29,50 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Handle active states for navigation with proper about page handling
+    // Handle active states for navigation (CORREGIDO PARA GITHUB PAGES)
     function updateActiveLinks() {
-      const currentPath = window.location.pathname;
+      // 1. Obtenemos la URL actual completa, limpia de anclas (#) y variables (?)
+      const currentUrl = window.location.href.split('#')[0].split('?')[0].replace(/\/$/, "");
       const menuItems = document.querySelectorAll('.menu-main ul li');
-      const showAboutPage = window.Hugo?.showAboutPage;
-      
-      menuItems.forEach(item => {
-        const link = item.querySelector('a');
-        const section = link.dataset.section;
-        
-        // Hide about link if disabled
-        if (section === 'about' && !showAboutPage) {
-          item.style.display = 'none';
-          return;
-        }
-
-        // Special case for home
-        if (section === '' && currentPath === '/') {
-          item.classList.add('active');
-          return;
-        }
-        
-        // Check if current path starts with section path
-        if (section && currentPath.startsWith('/' + section + '/')) {
-          item.classList.add('active');
-        } else {
-          item.classList.remove('active');
-        }
-      });
-    }
-
-    // Function to update menu items based on showAboutPage parameter
-    function updateMenuItems() {
-      const aboutMenuItem = document.querySelector('.menu-main ul li a[data-section="about"]');
-      if (aboutMenuItem) {
-        const aboutParent = aboutMenuItem.parentElement;
-        aboutParent.style.display = window.Hugo?.showAboutPage ? 'block' : 'none';
-      }
-    }
-  
-    // Run on page load
-    updateActiveLinks();
-    updateMenuItems();
-  
-    // Update on navigation (for SPA-like behavior if needed)
-    window.addEventListener('popstate', updateActiveLinks);
-  });
+      const
