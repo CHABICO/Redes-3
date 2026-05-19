@@ -130,15 +130,3 @@ tags: ["Checklist", "Estado", "Requisitos"]
 - [ ] **Inyección de ruta falsa en OSPF** — verificación que la autenticación SHA-256 bloquea el ataque
 
 ---
-
-## Resumen de prioridades
-
-| Prioridad | Tarea | Complejidad |
-|-----------|-------|-------------|
-| 🟡 Media | Script Python hardening/verificación | Media |
-| 🟡 Media | Escenarios de ataque documentados | Media |
-| 🟡 Media | Remote Access VPN (OpenVPN en pfSense) | Media |
-| 🟢 Opcional | 802.1X / RADIUS | Alta |
-| 🟢 Opcional | MPLS / VRF | Alta |
-| 🟢 Opcional | SD-WAN | Alta |
-| 🟢 Opcional | Site-to-Site VPN IPsec | Alta |

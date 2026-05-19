@@ -18,8 +18,6 @@ Rborde1/Rborde2 (10.20.0.x)
         └── port3 → Switch3 → Servidores internos (10.40.0.0/24)
 ```
 
-[🔴 imagen mostrando la topología GNS3 con el FortiGate y sus conexiones]
-
 ---
 
 ## Configuración de Interfaces

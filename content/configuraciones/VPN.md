@@ -168,23 +168,63 @@ ip route 10.40.0.0 255.255.255.0 10.30.0.1
 
 ---
 
-## VPN de Acceso Remoto — OpenVPN
-
-La VPN de acceso remoto para teletrabajadores está planificada mediante **OpenVPN** en pfSense Edificio 1, aprovechando que pfSense incluye el servidor OpenVPN de forma nativa sin necesidad de instalar paquetes adicionales.
-
-La configuración teórica sería la siguiente:
-
-**Servidor OpenVPN en pfSense Ed1:**
-
+## VPN de Acceso Remoto - OpenVPN
+ 
+La VPN de acceso remoto para teletrabajadores está implementada mediante **OpenVPN** en pfSense Edificio 1. pfSense incluye el servidor OpenVPN de forma nativa y dispone de un asistente de configuración que simplifica el proceso de despliegue, incluyendo la generación de certificados.
+ 
+### Infraestructura de certificados
+ 
+Se ha creado una PKI (Public Key Infrastructure) propia para NovaTech Solutions mediante el gestor de certificados de pfSense:
+ 
+| Certificado | Tipo | Validez | Descripción |
+|-------------|------|---------|-------------|
+| NovaTech-CA | CA raíz | 10 años | Autoridad certificadora corporativa |
+| NovaTech-Server | Servidor | 1 año | Certificado del servidor OpenVPN |
+| xavi-vpn | Usuario | 10 años | Certificado del teletrabajador xavi |
+ 
+### Configuración del servidor
+ 
 | Parámetro | Valor |
 |-----------|-------|
-| Protocol | UDP |
-| Port | 1194 |
-| Tunnel Network | `10.50.0.0/24` (pool para clientes remotos) |
-| Local Network | `192.168.10.0/24, 192.168.11.0/24, 10.40.0.0/24` |
-| Authentication | TLS + usuario/contraseña |
-| Encryption | AES-256-GCM |
+| Descripción | NovaTech-RemoteAccess |
+| Protocolo | UDP IPv4 |
+| Interfaz | WAN |
+| Puerto | 1194 |
+| TLS Authentication | Habilitado |
+| DH Parameters | 2048 bit |
+| Encryption | CHACHA20-POLY1305, AES-256-CBC |
+| Auth Digest | SHA256 |
+| Tunnel Network | `10.50.0.0/24` |
+| Redes accesibles | `10.40.0.0/24`, `192.168.10.0/24`, `192.168.11.0/24` |
+| Máx. conexiones | 10 |
+| DNS | `10.40.0.10` (servidor DNS interno) |
+| Dominio DNS | `novatech.cat` |
+ 
+![servidor openvpn](/images/recursos/openvpn-server.png)
 
-Los teletrabajadores conectados recibirían una IP del rango `10.50.0.0/24` y tendrían acceso a las redes internas del Edificio 1 como si estuvieran físicamente en la oficina.
-
-Esta implementación no se ha completado por limitaciones de tiempo del proyecto. En un escenario real, pfSense incluye un asistente de configuración para OpenVPN que simplifica enormemente el proceso, incluyendo la generación de certificados y la exportación del perfil de cliente.
+### Usuarios VPN
+ 
+Los usuarios VPN se gestionan desde `System → User Manager` de pfSense. Cada usuario tiene su propio certificado de cliente vinculado a la CA corporativa:
+ 
+| Usuario | Certificado | Acceso |
+|---------|-------------|--------|
+| xavi | xavi-vpn | Redes internas Edificio 1 |
+ 
+### Perfil de cliente
+ 
+El archivo de configuración `.ovpn` para los teletrabajadores se genera manualmente a partir de los certificados exportados desde pfSense. Incluye embebidos el certificado de la CA, el certificado de usuario, la clave privada y la clave TLS-Auth:
+ 
+ 
+### Verificación
+ 
+El servidor OpenVPN está activo y escuchando en el puerto 1194:
+ 
+```
+root  35157  /usr/local/sbin/openvpn --config /var/etc/openvpn/server1/config.ovpn
+udp4  0  0  192.168.44.139.1194  *.*
+```
+ 
+![conexión openvpn](/images/recursos/openvpn-conexión.png)
+![web server interno](/images/recursos/openvpn-pagserver.png)
+ 
+La verificación se realizó importando el perfil `.ovpn` en un cliente externo (OpenVPN Connect) y accediendo al servidor interno `10.40.0.10` desde una red diferente a la del laboratorio. El cliente recibe una IP del rango `10.50.0.x` y tiene acceso completo a las redes internas del Edificio 1.

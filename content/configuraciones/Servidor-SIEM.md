@@ -1,5 +1,5 @@
 ---
-title: "Monitorización — IDS y SIEM"
+title: "Monitorización - IDS y SIEM"
 date: 2026-05-15
 summary: "Despliegue de Suricata en modo IDS en los servidores DMZ e Interno, e integración con Wazuh como plataforma SIEM centralizada."
 author: "Xavier C., Òscar F., Gerard S."
@@ -8,7 +8,7 @@ tags: ["IDS", "SIEM", "Suricata", "Wazuh", "Monitorización", "Seguridad"]
 
 ## Contexto y Objetivo
 
-En esta fase del proyecto se implementa una capa de monitorización y detección de intrusiones sobre la infraestructura del Edificio 1. El objetivo es disponer de visibilidad sobre el tráfico en las zonas más sensibles de la red — la DMZ y la red de servidores internos — y centralizar las alertas en un SIEM para su análisis.
+En esta fase del proyecto se implementa una capa de monitorización y detección de intrusiones sobre la infraestructura del Edificio 1. El objetivo es disponer de visibilidad sobre el tráfico en las zonas más sensibles de la red - la DMZ y la red de servidores internos - y centralizar las alertas en un SIEM para su análisis.
 
 Se ha optado por implementar únicamente el modo **IDS (Intrusion Detection System)** en lugar de IPS, dado que el entorno es de laboratorio y el modo inline (bloqueo activo) requeriría recursos adicionales y una fase de ajuste de reglas para evitar falsos positivos que interrumpan el tráfico legítimo. Esta decisión se documenta como limitación del entorno y no del diseño.
 
