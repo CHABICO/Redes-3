@@ -2,9 +2,11 @@
 title: "Red"
 ---
 # Topología de Red
-## Proximamente 
+
 ![topología de red nueva](/images/recursos/topologia.png)
+
 ---
+
 # Direccionamiento de Red
 
 ## Edificio 1

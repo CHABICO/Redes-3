@@ -1,0 +1,222 @@
+---
+title: "Configuración del Servidor Interno"
+date: 2026-05-19
+summary: "Despliegue del servidor Ubuntu interno con servicios DNS (Bind9), correo corporativo (Postfix + Dovecot) y monitorización IDS mediante Suricata integrado con Wazuh."
+author: "Xavier C., Òscar F., Gerard S."
+tags: ["DNS", "Correo", "Postfix", "Dovecot", "Bind9", "IDS", "Suricata", "Wazuh"]
+---
+
+## Contexto y Objetivo
+
+El servidor Ubuntu-Server-Interno-1 (`10.40.0.10`) centraliza los servicios internos de NovaTech Solutions: resolución DNS para el dominio corporativo `novatech.cat`, servicio de correo electrónico interno y monitorización IDS mediante Suricata integrado con el SIEM Wazuh.
+
+Al estar en la red de servidores internos (`10.40.0.0/24`) detrás del FortiGate, solo es accesible desde las redes internas de la organización, garantizando que los servicios corporativos no están expuestos directamente a internet.
+
+---
+
+## Configuración de Red
+
+| Parámetro | Valor |
+|-----------|-------|
+| IP | `10.40.0.10/24` |
+| Gateway | `10.40.0.1` (FortiGate port3) |
+| DNS | `10.40.0.10` (sí mismo) |
+| Hostname | `mail.novatech.cat` |
+
+---
+
+## DNS — Bind9
+
+### Instalación
+
+```bash
+sudo apt update
+sudo apt install -y bind9 bind9utils bind9-doc
+```
+
+### Configuración de zonas
+
+En `/etc/bind/named.conf.local` se han definido dos zonas: la zona directa para `novatech.cat` y la zona inversa para `10.40.0.0/24`:
+
+```
+zone "novatech.cat" {
+    type master;
+    file "/etc/bind/zones/db.novatech.cat";
+};
+
+zone "40.10.in-addr.arpa" {
+    type master;
+    file "/etc/bind/zones/db.10.40";
+};
+```
+
+### Zona directa — db.novatech.cat
+
+```
+$TTL    604800
+@       IN      SOA     ns1.novatech.cat. admin.novatech.cat. (
+                              2         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+
+@       IN      NS      ns1.novatech.cat.
+
+ns1     IN      A       10.40.0.10
+mail    IN      A       10.40.0.10
+www     IN      A       172.16.0.20
+
+@       IN      MX      10      mail.novatech.cat.
+```
+
+### Zona inversa — db.10.40
+
+```
+$TTL    604800
+@       IN      SOA     ns1.novatech.cat. admin.novatech.cat. (
+                              1         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+
+@       IN      NS      ns1.novatech.cat.
+
+10      IN      PTR     ns1.novatech.cat.
+10      IN      PTR     mail.novatech.cat.
+20      IN      PTR     siem.novatech.cat.
+```
+
+---
+
+## Correo Corporativo — Postfix + Dovecot
+
+### Instalación
+
+```bash
+sudo apt install -y postfix dovecot-imapd dovecot-pop3d mailutils
+```
+
+Durante la instalación de Postfix seleccionar **Internet Site** con el nombre de dominio `novatech.cat`.
+
+### Configuración Postfix
+
+```bash
+sudo postconf -e "myhostname = mail.novatech.cat"
+sudo postconf -e "mydomain = novatech.cat"
+sudo postconf -e "myorigin = novatech.cat"
+sudo postconf -e "mydestination = novatech.cat, mail.novatech.cat, localhost.novatech.cat, localhost"
+sudo postconf -e "mynetworks = 10.40.0.0/24 127.0.0.0/8"
+sudo postconf -e "inet_interfaces = all"
+
+sudo systemctl restart postfix
+```
+
+### Configuración Dovecot
+
+En `/etc/dovecot/conf.d/10-mail.conf`:
+
+```
+mail_location = mbox:~/mail:INBOX=/var/mail/%u
+```
+
+En `/etc/dovecot/conf.d/10-auth.conf`:
+
+```
+disable_plaintext_auth = no
+auth_mechanisms = plain login
+```
+
+```bash
+sudo systemctl restart dovecot
+```
+
+### Usuarios de correo
+
+Se han creado los usuarios corporativos de NovaTech Solutions:
+
+```bash
+sudo useradd -m -s /bin/bash admin
+sudo useradd -m -s /bin/bash xavi
+sudo useradd -m -s /bin/bash gerard
+sudo useradd -m -s /bin/bash oscar
+```
+
+Cada usuario dispone de una cuenta de correo con el formato `usuario@novatech.cat`.
+
+### Verificación
+
+```bash
+echo "Test correo NovaTech" | mail -s "Prueba" admin@novatech.cat
+sudo tail -20 /var/log/mail.log
+sudo cat /var/mail/admin
+```
+
+![contenido del buzón de admin](../../static/images/recursos/test-correo.png)
+
+El correo se entregó correctamente con `status=sent (delivered to mailbox)`.
+
+---
+
+## Suricata IDS
+
+Suricata está instalado y configurado en modo IDS para monitorizar el tráfico de la red de servidores internos.
+
+### Instalación
+
+```bash
+sudo apt install -y suricata
+sudo suricata-update
+```
+
+### Configuración
+
+En `/etc/suricata/suricata.yaml`:
+
+```yaml
+af-packet:
+  - interface: ens33
+
+vars:
+  address-groups:
+    HOME_NET: "[10.40.0.0/24]"
+```
+
+### Reglas personalizadas
+
+En `/etc/suricata/rules/local.rules`:
+
+```
+alert icmp any any -> $HOME_NET any (msg:"ICMP Ping detectado"; sid:1000001; rev:1;)
+alert tcp any any -> $HOME_NET 80 (msg:"Acceso HTTP detectado"; sid:1000002; rev:1;)
+```
+
+### Verificación
+
+```bash
+curl http://testmyids.com
+sudo tail -f /var/log/suricata/fast.log
+```
+![suricata tras acceder a testmyids.com](../../static/images/recursos/verificacion-suricata.png)
+
+---
+
+## Integración con Wazuh
+
+El agente Wazuh está conectado al manager SIEM (`10.40.0.20`) y envía las alertas de Suricata al dashboard centralizado.
+
+```bash
+sudo WAZUH_MANAGER='10.40.0.20' WAZUH_AGENT_NAME='IDS-Interno' dpkg -i wazuh-agent_4.7.5-1_amd64.deb
+sudo systemctl enable wazuh-agent
+sudo systemctl start wazuh-agent
+```
+
+En `/var/ossec/etc/ossec.conf`:
+
+```xml
+<localfile>
+  <log_format>json</log_format>
+  <location>/var/log/suricata/eve.json</location>
+</localfile>
+```
