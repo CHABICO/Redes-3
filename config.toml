@@ -62,30 +62,30 @@ pygmentsUseClasses = true
 [menu]
   [[menu.main]]
     identifier = 'home'
-    name = '🏠'
+    name = 'Home'
     url = '/'
     weight = 1
 
   [[menu.main]]
     identifier = "red"
-    name = "🌐"
+    name = "Red"
     url = "/red/"
     weight = 2
 
   [[menu.main]]
     identifier = "configuraciones"
-    name = "⚙️"
+    name = "Configuraciones"
     url = "/configuraciones/"
     weight = 3
 
   [[menu.main]]
     identifier = "archivos"
-    name = "📁"
+    name = "Archivos"
     url = "/archivos/"
     weight = 4
   
   [[menu.main]]
     identifier = "progreso"
-    name = "🚶🏻‍♂️‍➡️"
+    name = "Progreso"
     url = "/progreso/"
     weight = 5
